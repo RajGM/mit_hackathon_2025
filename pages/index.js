@@ -11,105 +11,57 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const presets = [
+  { name: "Default", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FDEFAULT.webp&w=360&q=75" },
+  { name: "Ghibli Studio", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FGHIBLI.webp&w=360&q=75" },
+  { name: "Educational", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FR_TECHNICAL_DRAWING.webp&w=360&q=75" },
+  { name: "Pixar", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FPIXAR.webp&w=360&q=75" },
+  { name: "Anime", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FANIME.webp&w=360&q=75" },
+  { name: "Realist", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FREALISM.webp&w=360&q=75" },
+  { name: "Flat Animation", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FFLAT_ANIMATION.webp&w=360&q=75" },
+  { name: "Sketch Color", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSKETCH_COLOR.webp&w=360&q=75" },
+  { name: "Sketch B&W", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSKETCH_BW.webp&w=360&q=75" },
+  { name: "Ultra Realism", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FULTRA_REALISM.webp&w=360&q=75" },
+  { name: "Japanese Ink", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FINK.webp&w=360&q=75" },
+  { name: "3D Render", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRENDER_3D.webp&w=360&q=75" },
+  { name: "Lego", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FLEGO.webp&w=360&q=75" },
+  { name: "Sci-Fi", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSCIFI.webp&w=360&q=75" },
+  { name: "Retro Cartoon", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRECRO_CARTOON.webp&w=360&q=75" },
+  { name: "Pixel Art", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FPIXEL_ART.webp&w=360&q=75" },
+  { name: "Anime Realism", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FANIME_SR.webp&w=360&q=75" },
+  { name: "Fantasy", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FFANTASY.webp&w=360&q=75" },
+  { name: "Movie", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMOVIE.webp&w=360&q=75" },
+  { name: "Stylized Illustration", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSTYLIZED_ILLUSTRATION.webp&w=360&q=75" },
+  { name: "Manga", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMANGA.webp&w=360&q=75" },
+  { name: "Technical Drawing", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FR_TECHNICAL_DRAWING_RECRAFT.webp&w=360&q=75" },
+  { name: "Creative", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FCREATIVE.webp&w=360&q=75" },
+  { name: "Photography", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FPHOTOGRAPHY.webp&w=360&q=75" },
+  { name: "Raytraced", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRAYTRACED.webp&w=360&q=75" },
+  { name: "Environment", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FENVIRONMENT.webp&w=360&q=75" },
+  { name: "Illustration", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FILLUSTRATION.webp&w=360&q=75" },
+  { name: "Alternative 2", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FALTERNATIVE_2.webp&w=360&q=75" },
+  { name: "Spider", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSPIDER.webp&w=360&q=75" },
+  { name: "Kids Book", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FCHILDRENS_BOOK_ILLUSTRATIONS.webp&w=360&q=75" },
+  { name: "Nintendo", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FNINTENDO.webp&w=360&q=75" },
+  { name: "Minecraft", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMINECRAFT.webp&w=360&q=75" },
+  { name: "New Yorker Cartoon", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FNEW_YORKER.webp&w=360&q=75" },
+  { name: "1950s Advertisement", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2F1950S_ADVERTISEMENT.webp&w=360&q=75" },
+  { name: "Renaissance Fresco", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRENAISSANCE_FRESCO.webp&w=360&q=75" },
+  { name: "Modern Noir", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMODERN_NOIR_MINIMALISM.webp&w=360&q=75" },
+  { name: "Expressive Ink", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FEXPRESSIVE_INK_MINIMALISM.webp&w=360&q=75" },
+  { name: "Cosmic Baroque", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FGILDED_COSMIC_BAROQUE.webp&w=360&q=75" },
+  { name: "Epic Lineburst", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FEPIC_LINEBURST.webp&w=360&q=75" },
+  { name: "Haunted Linework", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FHAUNTED_LINEWORK.webp&w=360&q=75" }
+];
+
+
 export default function Home() {
   return (
     <div
       className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
     >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      
+
     </div>
   );
 }
