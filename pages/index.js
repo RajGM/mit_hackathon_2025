@@ -1,5 +1,5 @@
 // pages/index.js
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import PresetPicker from "../components/PresetPicker";
@@ -51,6 +51,15 @@ export default function Home() {
   const [currentJob, setCurrentJob] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
 
+  // Preview modal
+  const [previewOpen, setPreviewOpen] = useState(false);
+  useEffect(() => {
+    if (!previewOpen) return;
+    const onKey = (e) => e.key === "Escape" && setPreviewOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [previewOpen]);
+
   const handlePreset = (p) => setSelectedPreset(p);
   const handleAspect = (a) => setSelectedAspect(a);
   const handleVoice = (v) => setSelectedVoice(v);
@@ -59,34 +68,34 @@ export default function Home() {
 
   const monitorJobStatus = async (jobId, audioUrl) => {
     setCurrentJob(jobId);
-    
+
     // Store initial job info including audio URL
     setJobStatus({
-      status: 'submitted',
-      message: 'Job submitted successfully',
-      audioUrl: audioUrl
+      status: "submitted",
+      message: "Job submitted successfully",
+      audioUrl: audioUrl,
     });
-    
+
     const checkStatus = async () => {
       try {
         const res = await fetch(`/api/status?id=${jobId}`);
         if (res.ok) {
           const statusData = await res.json();
           setJobStatus(statusData);
-          
+
           // If job is complete or failed, stop monitoring
-          if (statusData.status === 'done' || statusData.status === 'failed') {
+          if (statusData.status === "done" || statusData.status === "failed") {
             return;
           }
-          
+
           // Continue monitoring every 5 seconds
           setTimeout(checkStatus, 5000);
         }
       } catch (error) {
-        console.error('Error checking job status:', error);
+        console.error("Error checking job status:", error);
       }
     };
-    
+
     // Start monitoring
     checkStatus();
   };
@@ -97,25 +106,25 @@ export default function Home() {
 
     console.log(
       script,
-      selectedPreset,     // whatever your PresetPicker returns
+      selectedPreset,
       selectedAspect,
-      selectedVoice,       // e.g. { id: "alloy", label: "Alloy" }
-      selectedMusic,       // e.g. { id: "observer", name: "Observer" }
-      captionConfig,    // { disabled, style, alignment }
-      { wordCount, estDurationSec },
-    )
+      selectedVoice,
+      selectedMusic,
+      captionConfig,
+      { wordCount, estDurationSec }
+    );
 
     try {
-      const res = await fetch("/api/generate2", {
+      const res = await fetch("/api/generate4", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           script,
-          preset: selectedPreset,     // whatever your PresetPicker returns
+          preset: selectedPreset,
           aspectRatio: selectedAspect,
-          voice: selectedVoice,       // e.g. { id: "alloy", label: "Alloy" }
-          music: selectedMusic,       // e.g. { id: "observer", name: "Observer" }
-          captions: captionConfig,    // { disabled, style, alignment }
+          voice: selectedVoice,
+          music: selectedMusic,
+          captions: captionConfig,
           stats: { wordCount, estDurationSec },
         }),
       });
@@ -126,14 +135,9 @@ export default function Home() {
       }
       const data = await res.json();
       console.log("Generation submitted:", data);
-      
+
       if (data.success && data.shotstackId) {
-        // Show success message and start monitoring status
-        setErrorMsg(""); // Clear any previous errors
-        // You can add toast notification here using react-hot-toast
-        // toast.success("Video generation started! Check status below.");
-        
-        // Start monitoring the job status
+        setErrorMsg("");
         monitorJobStatus(data.shotstackId, data.audioUrl);
       } else {
         throw new Error(data.error || "Failed to submit generation job");
@@ -181,8 +185,6 @@ export default function Home() {
             </div>
           </Card>
 
-
-
           <Card title="Choose a generation preset">
             <PresetPicker onSelect={handlePreset} />
           </Card>
@@ -221,7 +223,6 @@ export default function Home() {
               </div>
             </div>
           </Card>
-
         </div>
 
         {/* RIGHT sidebar */}
@@ -244,45 +245,48 @@ export default function Home() {
         <div className="fixed bottom-4 right-4 w-80 bg-white rounded-lg border border-slate-200 shadow-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-800">Video Generation Status</h3>
-            <button 
+            <button
               onClick={() => setCurrentJob(null)}
               className="text-slate-400 hover:text-slate-600"
+              aria-label="Close status"
             >
               ×
             </button>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex justify-between text-xs">
               <span className="text-slate-600">Status:</span>
-              <span className={`font-medium ${
-                jobStatus.status === 'done' ? 'text-green-600' : 
-                jobStatus.status === 'failed' ? 'text-red-600' : 
-                'text-blue-600'
-              }`}>
+              <span
+                className={`font-medium ${
+                  jobStatus.status === "done"
+                    ? "text-green-600"
+                    : jobStatus.status === "failed"
+                    ? "text-red-600"
+                    : "text-blue-600"
+                }`}
+              >
                 {jobStatus.status}
               </span>
             </div>
-            
+
             {jobStatus.progress > 0 && (
               <div className="w-full bg-slate-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                <div
+                  className="h-2 rounded-full transition-all duration-300 bg-blue-600"
                   style={{ width: `${jobStatus.progress}%` }}
-                ></div>
+                />
               </div>
             )}
-            
-            {jobStatus.message && (
-              <p className="text-xs text-slate-600">{jobStatus.message}</p>
-            )}
-            
+
+            {jobStatus.message && <p className="text-xs text-slate-600">{jobStatus.message}</p>}
+
             {jobStatus.audioUrl && (
               <div className="text-xs">
                 <span className="text-slate-600">Audio:</span>
-                <a 
-                  href={jobStatus.audioUrl} 
-                  target="_blank" 
+                <a
+                  href={jobStatus.audioUrl}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 ml-1 underline"
                 >
@@ -290,21 +294,50 @@ export default function Home() {
                 </a>
               </div>
             )}
-            
-            {jobStatus.url && jobStatus.status === 'done' && (
-              <a 
-                href={jobStatus.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
+
+            {jobStatus.url && jobStatus.status === "done" && (
+              <button
+                onClick={() => setPreviewOpen(true)}
                 className="block w-full text-center bg-green-600 text-white text-xs py-2 px-3 rounded-md hover:bg-green-700 transition-colors"
               >
-                Download Video
-              </a>
+                Preview Video
+              </button>
             )}
-            
-            {jobStatus.error && (
-              <p className="text-xs text-red-600">{jobStatus.error}</p>
-            )}
+
+            {jobStatus.error && <p className="text-xs text-red-600">{jobStatus.error}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewOpen && jobStatus?.url && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" aria-modal="true" role="dialog">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60" onClick={() => setPreviewOpen(false)} />
+
+          {/* Dialog */}
+          <div className="relative z-10 w-[92vw] max-w-3xl rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b p-3">
+              <h4 className="text-sm font-semibold text-slate-800">Video Preview</h4>
+              <button
+                onClick={() => setPreviewOpen(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg leading-none px-2"
+                aria-label="Close preview"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-3">
+              <video
+                key={jobStatus.url} // ensures reload if URL changes
+                src={jobStatus.url}
+                poster={jobStatus.thumbnail || undefined}
+                controls
+                autoPlay
+                className="w-full rounded-lg outline-none"
+              />
+            </div>
           </div>
         </div>
       )}

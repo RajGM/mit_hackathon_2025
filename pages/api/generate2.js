@@ -5,7 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Initialize Shotstack client using official SDK
 const defaultClient = Shotstack.ApiClient.instance;
-defaultClient.basePath = process.env.SHOTSTACK_HOST || 'https://api.shotstack.io/stage';
+defaultClient.basePath = process.env.SHOTSTACK_HOST || 'https://api.shotstack.io/edit/stage';
 
 const DeveloperKey = defaultClient.authentications['DeveloperKey'];
 DeveloperKey.apiKey = process.env.SHOTSTACK_API_KEY;
@@ -17,6 +17,10 @@ const openaiApiKey = process.env.OPENAI_API_KEY;
 
 export default async function handler(req, res) {
   // Only allow POST requests
+  console.log('Received request:', req.method, req.body);
+
+  return res.status(405).json({ error: 'Method not allowed. Use POST.' });
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
@@ -87,7 +91,9 @@ export default async function handler(req, res) {
     }
 
     // Step 2: Upload audio to Firebase Storage
-    let audioUrl;
+    let audioUrl = "https://firebasestorage.googleapis.com/v0/b/foss-mentoring.appspot.com/o/audio%2Ftts-audio-1754814216281-qrrju6d6b.mp3?alt=media&token=f064c1a4-0379-4702-8a8b-f9e859478452";
+
+    /*
     try {
       const timestamp = Date.now();
       const audioFileName = `tts-audio-${timestamp}-${Math.random().toString(36).substr(2, 9)}.mp3`;
@@ -106,7 +112,7 @@ export default async function handler(req, res) {
       console.error('Firebase Storage upload failed:', error);
       return res.status(500).json({ error: 'Failed to upload audio to storage' });
     }
-
+*/
     // Step 3: Create video composition using correct Shotstack format
     const videoComposition = createVideoComposition({
       script,
@@ -151,9 +157,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in generate API:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
-      message: error.message 
+      message: error.message
     });
   }
 }
@@ -162,10 +168,10 @@ export default async function handler(req, res) {
 function createVideoComposition({ script, audioUrl, aspectRatio, music, captions, stats }) {
   // Calculate dimensions based on aspect ratio
   const dimensions = getDimensionsFromAspectRatio(aspectRatio);
-  
+
   // Create timeline tracks
   const tracks = [];
-  
+
   // Background track (solid color)
   const backgroundTrack = {
     clips: [
