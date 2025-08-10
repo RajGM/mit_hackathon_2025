@@ -48,12 +48,48 @@ export default function Home() {
   // Generate state
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [currentJob, setCurrentJob] = useState(null);
+  const [jobStatus, setJobStatus] = useState(null);
 
   const handlePreset = (p) => setSelectedPreset(p);
   const handleAspect = (a) => setSelectedAspect(a);
   const handleVoice = (v) => setSelectedVoice(v);
   const handleMusic = (m) => setSelectedMusic(m);
   const handleCaption = (c) => setCaptionConfig(c);
+
+  const monitorJobStatus = async (jobId, audioUrl) => {
+    setCurrentJob(jobId);
+    
+    // Store initial job info including audio URL
+    setJobStatus({
+      status: 'submitted',
+      message: 'Job submitted successfully',
+      audioUrl: audioUrl
+    });
+    
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`/api/status?id=${jobId}`);
+        if (res.ok) {
+          const statusData = await res.json();
+          setJobStatus(statusData);
+          
+          // If job is complete or failed, stop monitoring
+          if (statusData.status === 'done' || statusData.status === 'failed') {
+            return;
+          }
+          
+          // Continue monitoring every 5 seconds
+          setTimeout(checkStatus, 5000);
+        }
+      } catch (error) {
+        console.error('Error checking job status:', error);
+      }
+    };
+    
+    // Start monitoring
+    checkStatus();
+  };
 
   const handleGenerate = async () => {
     setSubmitting(true);
@@ -70,7 +106,7 @@ export default function Home() {
     )
 
     try {
-      const res = await fetch("/api/generate", {
+      const res = await fetch("/api/generate2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,8 +125,19 @@ export default function Home() {
         throw new Error(`HTTP ${res.status}: ${text || "Failed to generate"}`);
       }
       const data = await res.json();
-      console.log("Generation queued:", data);
-      // TODO: route to a status page / show toast
+      console.log("Generation submitted:", data);
+      
+      if (data.success && data.shotstackId) {
+        // Show success message and start monitoring status
+        setErrorMsg(""); // Clear any previous errors
+        // You can add toast notification here using react-hot-toast
+        // toast.success("Video generation started! Check status below.");
+        
+        // Start monitoring the job status
+        monitorJobStatus(data.shotstackId, data.audioUrl);
+      } else {
+        throw new Error(data.error || "Failed to submit generation job");
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg(err.message || "Something went wrong");
@@ -191,6 +238,76 @@ export default function Home() {
           </Card>
         </div>
       </main>
+
+      {/* Job Status Section */}
+      {currentJob && jobStatus && (
+        <div className="fixed bottom-4 right-4 w-80 bg-white rounded-lg border border-slate-200 shadow-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-800">Video Generation Status</h3>
+            <button 
+              onClick={() => setCurrentJob(null)}
+              className="text-slate-400 hover:text-slate-600"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-600">Status:</span>
+              <span className={`font-medium ${
+                jobStatus.status === 'done' ? 'text-green-600' : 
+                jobStatus.status === 'failed' ? 'text-red-600' : 
+                'text-blue-600'
+              }`}>
+                {jobStatus.status}
+              </span>
+            </div>
+            
+            {jobStatus.progress > 0 && (
+              <div className="w-full bg-slate-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${jobStatus.progress}%` }}
+                ></div>
+              </div>
+            )}
+            
+            {jobStatus.message && (
+              <p className="text-xs text-slate-600">{jobStatus.message}</p>
+            )}
+            
+            {jobStatus.audioUrl && (
+              <div className="text-xs">
+                <span className="text-slate-600">Audio:</span>
+                <a 
+                  href={jobStatus.audioUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 ml-1 underline"
+                >
+                  View Audio
+                </a>
+              </div>
+            )}
+            
+            {jobStatus.url && jobStatus.status === 'done' && (
+              <a 
+                href={jobStatus.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block w-full text-center bg-green-600 text-white text-xs py-2 px-3 rounded-md hover:bg-green-700 transition-colors"
+              >
+                Download Video
+              </a>
+            )}
+            
+            {jobStatus.error && (
+              <p className="text-xs text-red-600">{jobStatus.error}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
