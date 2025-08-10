@@ -1,122 +1,132 @@
 // components/VoiceList.js
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 
-// List your voices (files must exist in /public/voices/<name>.mp3)
+// Files must exist in /public/voices/<id>.mp3
 const VOICES = [
-  { id: "alloy",     label: "Alloy",     tags: ["American", "En", "Conversational"] },
-  { id: "ash",       label: "Ash",       tags: ["Middle aged", "En", "Male"] },
-  { id: "ballad",    label: "Ballad",    tags: ["Warm", "Narration", "En"] },
-  { id: "coral",     label: "Coral",     tags: ["Friendly", "En", "Female"] },
-  { id: "echo",      label: "Echo",      tags: ["Crisp", "Clear", "En"] },
-  { id: "fable",     label: "Fable",     tags: ["Storytelling", "Soft", "En"] },
-  { id: "nova",      label: "Nova",      tags: ["Young", "En", "Conversational"] },
-  { id: "onyx",      label: "Onyx",      tags: ["Deep", "Male", "En"] },
-  { id: "sage",      label: "Sage",      tags: ["Calm", "Informative", "En"] },
-  { id: "shimmer",   label: "Shimmer",   tags: ["Bright", "Upbeat", "En"] },
+  { id: "alloy",   label: "Alloy",   tags: ["American", "En", "Conversational"] },
+  { id: "ash",     label: "Ash",     tags: ["Middle aged", "En", "Male"] },
+  { id: "ballad",  label: "Ballad",  tags: ["Warm", "Narration", "En"] },
+  { id: "coral",   label: "Coral",   tags: ["Friendly", "En", "Female"] },
+  { id: "echo",    label: "Echo",    tags: ["Crisp", "Clear", "En"] },
+  { id: "fable",   label: "Fable",   tags: ["Storytelling", "Soft", "En"] },
+  { id: "nova",    label: "Nova",    tags: ["Young", "En", "Conversational"] },
+  { id: "onyx",    label: "Onyx",    tags: ["Deep", "Male", "En"] },
+  { id: "sage",    label: "Sage",    tags: ["Calm", "Informative", "En"] },
+  { id: "shimmer", label: "Shimmer", tags: ["Bright", "Upbeat", "En"] },
 ];
 
-export default function VoiceList({ basePath = "/voices" }) {
+export default function VoiceList({
+  basePath = "/voices",
+  onSelect,              // (voiceObj) => void
+  initialSelectedId = null,
+}) {
+  const [selectedId, setSelectedId] = useState(initialSelectedId);
   const [playingId, setPlayingId] = useState(null);
   const audioRefs = useRef({}); // id -> HTMLAudioElement
+
+  const srcFor = (id) => `${basePath}/${id}.mp3`;
 
   // Ensure only one plays at a time
   const playVoice = async (id) => {
     const current = audioRefs.current[playingId];
     const next = audioRefs.current[id];
 
-    // If clicking the one already playing, toggle pause
+    // pause the currently playing one (if different)
+    if (playingId && playingId !== id && current && !current.paused) {
+      current.pause();
+      current.currentTime = 0;
+    }
+
+    if (!next) return;
+
+    // toggle if same item
     if (playingId === id) {
-      if (!next) return;
       if (!next.paused) {
         next.pause();
         setPlayingId(null);
       } else {
-        await next.play();
+        await next.play().catch(() => {});
         setPlayingId(id);
       }
       return;
     }
 
-    // Pause old if exists
-    if (current && !current.paused) {
-      current.pause();
-      current.currentTime = 0;
-    }
-
-    if (next) {
-      await next.play().catch(() => {}); // avoid unhandled promise on autoplay blocks
-      setPlayingId(id);
-    }
+    await next.play().catch(() => {});
+    setPlayingId(id);
   };
 
-  // When an audio ends, clear state if it was the one playing
-  useEffect(() => {
-    const entries = Object.entries(audioRefs.current);
-    entries.forEach(([id, el]) => {
-      const handler = () => {
-        if (playingId === id) setPlayingId(null);
-      };
-      el?.addEventListener?.("ended", handler);
-      return () => el?.removeEventListener?.("ended", handler);
-    });
-  }, [playingId]);
+  const handleSelect = (voice) => {
+    setSelectedId(voice.id);
+    onSelect?.({ ...voice, url: srcFor(voice.id) });
+  };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" role="radiogroup" aria-label="Voice selection">
       {VOICES.map((v) => {
-        const src = `${basePath}/${v.id}.mp3`;
-        const isActive = playingId === v.id;
+        const isSelected = selectedId === v.id;
+        const isPlaying = playingId === v.id;
+        const src = srcFor(v.id);
 
         return (
           <div
             key={v.id}
+            role="radio"
+            aria-checked={isSelected}
+            tabIndex={0}
+            onClick={() => handleSelect(v)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleSelect(v);
+              }
+            }}
             className={[
               "flex items-center justify-between rounded-xl border bg-white/70 dark:bg-neutral-900",
-              "px-3 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition",
-              isActive ? "ring-2 ring-emerald-400" : "border-neutral-200 dark:border-neutral-700",
+              "px-3 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition cursor-pointer",
+              isSelected
+                ? "ring-2 ring-emerald-400 border-emerald-300"
+                : "border-neutral-200 dark:border-neutral-700",
             ].join(" ")}
           >
-            {/* Left section: play button + avatar + text */}
+            {/* Left: play button + avatar + text */}
             <div className="flex items-center gap-3 min-w-0">
-              {/* Play / Pause button */}
               <button
                 type="button"
-                onClick={() => playVoice(v.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playVoice(v.id);
+                }}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700"
-                aria-label={isActive ? `Pause ${v.label}` : `Play ${v.label}`}
+                aria-label={isPlaying ? `Pause ${v.label}` : `Play ${v.label}`}
               >
-                {isActive ? (
-                  // Pause icon
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="10" y1="4" x2="10" y2="20"></line>
-                    <line x1="14" y1="4" x2="14" y2="20"></line>
+                {isPlaying ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2">
+                    <line x1="10" y1="4" x2="10" y2="20" />
+                    <line x1="14" y1="4" x2="14" y2="20" />
                   </svg>
                 ) : (
-                  // Play icon
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z"></path>
+                    <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
               </button>
 
-              {/* Gradient avatar */}
               <div className="h-9 w-9 rounded-md bg-gradient-to-br from-fuchsia-500 via-sky-500 to-emerald-400" />
 
-              {/* Name + subtitle */}
               <div className="min-w-0">
                 <div className="font-semibold truncate">{v.label}</div>
                 <div className="text-xs text-neutral-500">Works with any language</div>
               </div>
 
-              {/* Hidden audio element */}
               <audio
                 ref={(el) => (audioRefs.current[v.id] = el)}
                 src={src}
                 preload="none"
+                onEnded={() => setPlayingId((p) => (p === v.id ? null : p))}
               />
             </div>
 
-            {/* Right section: tags */}
+            {/* Right: tags */}
             <div className="hidden sm:flex flex-wrap gap-2 justify-end">
               {v.tags?.map((t, i) => (
                 <span

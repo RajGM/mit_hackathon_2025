@@ -1,85 +1,196 @@
-import Image from "next/image";
+// pages/index.js
+import { useMemo, useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import PresetPicker from "../components/PresetPicker";
 import AspectRatioSelector from "../components/AspectRatioSelector";
 import VoiceList from "../components/VoiceList";
 import MusicLibrary from "../components/MusicLibrary";
+import CaptionStylePicker from "../components/CaptionStylePicker";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const presets = [
-  { name: "Default", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FDEFAULT.webp&w=360&q=75" },
-  { name: "Ghibli Studio", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FGHIBLI.webp&w=360&q=75" },
-  { name: "Educational", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FR_TECHNICAL_DRAWING.webp&w=360&q=75" },
-  { name: "Pixar", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FPIXAR.webp&w=360&q=75" },
-  { name: "Anime", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FANIME.webp&w=360&q=75" },
-  { name: "Realist", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FREALISM.webp&w=360&q=75" },
-  { name: "Flat Animation", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FFLAT_ANIMATION.webp&w=360&q=75" },
-  { name: "Sketch Color", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSKETCH_COLOR.webp&w=360&q=75" },
-  { name: "Sketch B&W", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSKETCH_BW.webp&w=360&q=75" },
-  { name: "Ultra Realism", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FULTRA_REALISM.webp&w=360&q=75" },
-  { name: "Japanese Ink", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FINK.webp&w=360&q=75" },
-  { name: "3D Render", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRENDER_3D.webp&w=360&q=75" },
-  { name: "Lego", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FLEGO.webp&w=360&q=75" },
-  { name: "Sci-Fi", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSCIFI.webp&w=360&q=75" },
-  { name: "Retro Cartoon", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRECRO_CARTOON.webp&w=360&q=75" },
-  { name: "Pixel Art", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FPIXEL_ART.webp&w=360&q=75" },
-  { name: "Anime Realism", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FANIME_SR.webp&w=360&q=75" },
-  { name: "Fantasy", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FFANTASY.webp&w=360&q=75" },
-  { name: "Movie", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMOVIE.webp&w=360&q=75" },
-  { name: "Stylized Illustration", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSTYLIZED_ILLUSTRATION.webp&w=360&q=75" },
-  { name: "Manga", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMANGA.webp&w=360&q=75" },
-  { name: "Technical Drawing", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FR_TECHNICAL_DRAWING_RECRAFT.webp&w=360&q=75" },
-  { name: "Creative", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FCREATIVE.webp&w=360&q=75" },
-  { name: "Photography", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FPHOTOGRAPHY.webp&w=360&q=75" },
-  { name: "Raytraced", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRAYTRACED.webp&w=360&q=75" },
-  { name: "Environment", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FENVIRONMENT.webp&w=360&q=75" },
-  { name: "Illustration", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FILLUSTRATION.webp&w=360&q=75" },
-  { name: "Alternative 2", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FALTERNATIVE_2.webp&w=360&q=75" },
-  { name: "Spider", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FSPIDER.webp&w=360&q=75" },
-  { name: "Kids Book", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FCHILDRENS_BOOK_ILLUSTRATIONS.webp&w=360&q=75" },
-  { name: "Nintendo", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FNINTENDO.webp&w=360&q=75" },
-  { name: "Minecraft", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMINECRAFT.webp&w=360&q=75" },
-  { name: "New Yorker Cartoon", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FNEW_YORKER.webp&w=360&q=75" },
-  { name: "1950s Advertisement", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2F1950S_ADVERTISEMENT.webp&w=360&q=75" },
-  { name: "Renaissance Fresco", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FRENAISSANCE_FRESCO.webp&w=360&q=75" },
-  { name: "Modern Noir", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FMODERN_NOIR_MINIMALISM.webp&w=360&q=75" },
-  { name: "Expressive Ink", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FEXPRESSIVE_INK_MINIMALISM.webp&w=360&q=75" },
-  { name: "Cosmic Baroque", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FGILDED_COSMIC_BAROQUE.webp&w=360&q=75" },
-  { name: "Epic Lineburst", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FEPIC_LINEBURST.webp&w=360&q=75" },
-  { name: "Haunted Linework", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FHAUNTED_LINEWORK.webp&w=360&q=75" }
-];
-
-const aspectRatios = [
-  { label: "Square", value: "1:1" },
-  { label: "Landscape", value: "16:9" },
-  { label: "Portrait", value: "9:16" }
-];
+// simple card wrapper
+function Card({ title, subtitle, children, className = "" }) {
+  return (
+    <section className={`rounded-lg border border-slate-200 bg-white ${className}`}>
+      {(title || subtitle) && (
+        <header className="px-4 py-3 border-b border-slate-200">
+          {title && <h3 className="text-sm font-semibold text-slate-800">{title}</h3>}
+          {subtitle && <p className="text-xs text-slate-500 mt-1">{subtitle}</p>}
+        </header>
+      )}
+      <div className="p-4">{children}</div>
+    </section>
+  );
+}
 
 export default function Home() {
-  const handleSelect = (preset) => {
-    console.log("Selected preset:", preset);
-    // send to backend here
+  // SCRIPT (controlled so you can type)
+  const [script, setScript] = useState(
+    `Hi, welcome to MIT Hackathon! This is a state of the art Text to Speech model that you can use for your viral videos.`
+  );
+  const wordCount = useMemo(() => (script.trim() ? script.trim().split(/\s+/).length : 0), [script]);
+  const estDurationSec = useMemo(() => Math.ceil(wordCount / 2.5), [wordCount]); // ~150 wpm
+
+  // Selections coming from children
+  const [selectedPreset, setSelectedPreset] = useState(null);
+  const [selectedAspect, setSelectedAspect] = useState("1:1");
+  const [selectedVoice, setSelectedVoice] = useState(null);   // e.g. { id, label, ... }
+  const [selectedMusic, setSelectedMusic] = useState(null);   // e.g. { id/name, ... }
+  const [captionConfig, setCaptionConfig] = useState({
+    disabled: false,
+    style: null,
+    alignment: "bottom",
+  });
+
+  // Generate state
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handlePreset = (p) => setSelectedPreset(p);
+  const handleAspect = (a) => setSelectedAspect(a);
+  const handleVoice = (v) => setSelectedVoice(v);
+  const handleMusic = (m) => setSelectedMusic(m);
+  const handleCaption = (c) => setCaptionConfig(c);
+
+  const handleGenerate = async () => {
+    setSubmitting(true);
+    setErrorMsg("");
+
+    console.log(
+      script,
+      selectedPreset,     // whatever your PresetPicker returns
+      selectedAspect,
+      selectedVoice,       // e.g. { id: "alloy", label: "Alloy" }
+      selectedMusic,       // e.g. { id: "observer", name: "Observer" }
+      captionConfig,    // { disabled, style, alignment }
+      { wordCount, estDurationSec },
+    )
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          script,
+          preset: selectedPreset,     // whatever your PresetPicker returns
+          aspectRatio: selectedAspect,
+          voice: selectedVoice,       // e.g. { id: "alloy", label: "Alloy" }
+          music: selectedMusic,       // e.g. { id: "observer", name: "Observer" }
+          captions: captionConfig,    // { disabled, style, alignment }
+          stats: { wordCount, estDurationSec },
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text || "Failed to generate"}`);
+      }
+      const data = await res.json();
+      console.log("Generation queued:", data);
+      // TODO: route to a status page / show toast
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err.message || "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <PresetPicker presets={presets} onSelect={handleSelect} />
-      <AspectRatioSelector onSelect={handleSelect} />
-      <VoiceList /> {/* expects files in /public/voices/<id>.mp3 */}
-      <MusicLibrary onSelect={(track) => console.log("Selected:", track)} />
+    <div className={`${geistSans.className} ${geistMono.className} min-h-screen bg-slate-50`}>
+      {/* Top bar */}
+      <header className="border-b bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+          <h1 className="text-base font-semibold text-slate-800">Script to Video</h1>
+          <div className="flex items-center gap-2">
+            <button className="rounded-md border px-3 py-1.5 text-sm bg-white hover:bg-slate-50">Rewrite</button>
+            <button className="rounded-md bg-slate-900 text-white px-3 py-1.5 text-sm hover:bg-slate-800">
+              Script Generator
+            </button>
+          </div>
+        </div>
+      </header>
 
+      {/* Main layout */}
+      <main className="mx-auto max-w-7xl p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* LEFT column */}
+        <div className="space-y-6 lg:col-span-2">
+          <Card title="Your Video Narrator Script">
+            <textarea
+              className="w-full min-h-[160px] rounded-md border border-slate-300 bg-transparent
+               text-black placeholder-slate-500 p-3 text-sm leading-relaxed
+               caret-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400
+               selection:bg-emerald-100 selection:text-black"
+              placeholder={`Enter your script exactly as you want it spoken...\nUse <break time="1.0s" /> for pauses.`}
+              value={script}
+              onChange={(e) => setScript(e.target.value)}
+            />
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-slate-600">Number of words: {wordCount}</span>
+              <span className="text-xs text-slate-600">Estimated video duration: {estDurationSec}s</span>
+            </div>
+          </Card>
+
+
+
+          <Card title="Choose a generation preset">
+            <PresetPicker onSelect={handlePreset} />
+          </Card>
+
+          <Card title="Select audio or Generate Music">
+            <MusicLibrary onSelect={handleMusic} />
+          </Card>
+
+          <Card title="Captions">
+            <CaptionStylePicker onChange={handleCaption} />
+          </Card>
+
+          <Card title="Select Voice or Record Yourself">
+            <div className="space-y-3">
+              <VoiceList onSelect={handleVoice} />
+              {/* Generate button lives directly under Voices */}
+              <div className="flex items-center justify-end gap-3 pt-1">
+                {errorMsg ? <p className="text-xs text-red-600">{errorMsg}</p> : null}
+                <button
+                  onClick={handleGenerate}
+                  disabled={submitting || !script.trim()}
+                  className="inline-flex items-center gap-2 rounded-md bg-emerald-600 text-white px-4 py-2 text-sm hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <>
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
+                        <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" />
+                      </svg>
+                      Generating…
+                    </>
+                  ) : (
+                    <>Generate video</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </Card>
+
+        </div>
+
+        {/* RIGHT sidebar */}
+        <div className="space-y-6 lg:col-span-1">
+          <Card title="" className="sticky top-4">
+            <div className="space-y-4">
+              <div className="rounded-lg border border-slate-200 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-slate-800">Aspect Ratio</h4>
+                </div>
+                <AspectRatioSelector onSelect={handleAspect} />
+              </div>
+            </div>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 }
