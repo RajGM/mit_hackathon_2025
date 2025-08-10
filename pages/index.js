@@ -1,5 +1,9 @@
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
+import PresetPicker from "../components/PresetPicker";
+import AspectRatioSelector from "../components/AspectRatioSelector";
+import VoiceList from "../components/VoiceList";
+import MusicLibrary from "../components/MusicLibrary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,13 +58,27 @@ const presets = [
   { name: "Haunted Linework", img: "https://www.revid.ai/_next/image?url=%2Fpresets%2FHAUNTED_LINEWORK.webp&w=360&q=75" }
 ];
 
+const aspectRatios = [
+  { label: "Square", value: "1:1" },
+  { label: "Landscape", value: "16:9" },
+  { label: "Portrait", value: "9:16" }
+];
 
 export default function Home() {
+  const handleSelect = (preset) => {
+    console.log("Selected preset:", preset);
+    // send to backend here
+  };
+
+
   return (
     <div
       className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
     >
-      
+      <PresetPicker presets={presets} onSelect={handleSelect} />
+      <AspectRatioSelector onSelect={handleSelect} />
+      <VoiceList /> {/* expects files in /public/voices/<id>.mp3 */}
+      <MusicLibrary onSelect={(track) => console.log("Selected:", track)} />
 
     </div>
   );
