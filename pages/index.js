@@ -34,6 +34,14 @@ export default function Home() {
   const wordCount = useMemo(() => (script.trim() ? script.trim().split(/\s+/).length : 0), [script]);
   const estDurationSec = useMemo(() => Math.ceil(wordCount / 2.5), [wordCount]); // ~150 wpm
 
+  // NEW: Trend inputs
+  const [categories, setCategories] = useState(["beauty", "fitness"]);
+  const [subcategories, setSubcategories] = useState(["skincare", "10-minute-workouts"]);
+  const [region, setRegion] = useState("DE");
+  const [age, setAge] = useState("18-24");
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [trendError, setTrendError] = useState("");
+
   // Selections coming from children
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [selectedAspect, setSelectedAspect] = useState("1:1");
@@ -65,6 +73,38 @@ export default function Home() {
   const handleVoice = (v) => setSelectedVoice(v);
   const handleMusic = (m) => setSelectedMusic(m);
   const handleCaption = (c) => setCaptionConfig(c);
+
+  // NEW: call /api/trends and insert into script
+  const runTrendAnalysis = async () => {
+    setTrendError("");
+    setTrendLoading(true);
+    try {
+      const res = await fetch("/api/trends", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categories,
+          subcategories,
+          region,
+          age
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch trends");
+      }
+      // Our /api/trends returns { result: "..." }
+      const trendText = data?.result || "";
+      console.log("Trend analysis result:", data);
+      if (!trendText) throw new Error("Empty trends result");
+      // Insert the trend analysis directly into the script box
+      setScript(trendText);
+    } catch (e) {
+      setTrendError(e.message || "Trend analysis failed");
+    } finally {
+      setTrendLoading(false);
+    }
+  };
 
   const monitorJobStatus = async (jobId, audioUrl) => {
     setCurrentJob(jobId);
@@ -115,7 +155,7 @@ export default function Home() {
     );
 
     try {
-      const res = await fetch("/api/generate4", {
+      const res = await fetch("/api/generate5", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -169,6 +209,81 @@ export default function Home() {
       <main className="mx-auto max-w-7xl p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT column */}
         <div className="space-y-6 lg:col-span-2">
+          {/* NEW: Trend Analysis Panel */}
+          <Card title="Trend Analysis">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Categories */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Categories (comma-separated)</label>
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-slate-300 p-2 text-sm text-black" // ← added text-black
+                  value={Array.isArray(categories) ? categories.join(", ") : categories}
+                  onChange={(e) => setCategories(e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                  placeholder="beauty, fitness"
+                />
+
+              </div>
+              {/* Subcategories */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Subcategories (comma-separated)</label>
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-slate-300 p-2 text-sm text-black" // ← added text-black
+                  value={Array.isArray(subcategories) ? subcategories.join(", ") : subcategories}
+                  onChange={(e) => setSubcategories(e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                  placeholder="skincare, 10-minute-workouts"
+                />
+
+              </div>
+              {/* Region */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Region</label>
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-slate-300 p-2 text-sm text-black"
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value.trim())}
+                  placeholder="DE"
+                />
+
+              </div>
+              {/* Age */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Age Cohort</label>
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-slate-300 p-2 text-sm text-black"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value.trim())}
+                  placeholder="18-24"
+                />
+
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-end gap-3">
+              {trendError ? <p className="text-xs text-red-600">{trendError}</p> : null}
+              <button
+                onClick={runTrendAnalysis}
+                disabled={trendLoading}
+                className="inline-flex items-center gap-2 rounded-md bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {trendLoading ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
+                      <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" />
+                    </svg>
+                    Running…
+                  </>
+                ) : (
+                  <>Run Trend Analysis</>
+                )}
+              </button>
+            </div>
+          </Card>
+
           <Card title="Your Video Narrator Script">
             <textarea
               className="w-full min-h-[160px] rounded-md border border-slate-300 bg-transparent
@@ -258,13 +373,12 @@ export default function Home() {
             <div className="flex justify-between text-xs">
               <span className="text-slate-600">Status:</span>
               <span
-                className={`font-medium ${
-                  jobStatus.status === "done"
+                className={`font-medium ${jobStatus.status === "done"
                     ? "text-green-600"
                     : jobStatus.status === "failed"
-                    ? "text-red-600"
-                    : "text-blue-600"
-                }`}
+                      ? "text-red-600"
+                      : "text-blue-600"
+                  }`}
               >
                 {jobStatus.status}
               </span>

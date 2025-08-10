@@ -18,7 +18,8 @@ export default async function handler(req, res) {
 
   try {
     const { id } = req.query;
-
+    console.log('Checking status for job ID:', id);
+    
     if (!id) {
       return res.status(400).json({ error: 'Job ID is required' });
     }
